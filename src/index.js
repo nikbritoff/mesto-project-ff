@@ -1,8 +1,18 @@
 import './index.css';
 
-import { initialCards } from './scripts/constants.js';
-import { createCard, deleteCard, addLike } from './scripts/card.js';
+import { createCard, deleteCard, toggleLike } from './scripts/card.js';
 import { openPopup,closePopup } from './scripts/popup.js';
+import { enableValidation, clearValidation } from './scripts/validation.js';
+import { apiService } from './scripts/api.js';
+
+const VALIDATION_CONFIG = {
+  formSelector: '.popup__form',
+  inputSelector: '.popup__input',
+  submitButtonSelector: '.popup__button',
+  inactiveButtonClass: 'popup__button--disabled',
+  inputErrorClass: 'popup__input--error',
+  errorClass: 'popup__input_error--active'
+};
 
 const cardsList = document.querySelector('.places__list');
 const popups = document.querySelectorAll('.popup');
@@ -25,24 +35,42 @@ const fullModePopup = document.querySelector('.popup_type_image');
 const fullModeImage = fullModePopup.querySelector('.popup__image');
 const fullModeCaption = fullModePopup.querySelector('.popup__caption');
 
-const renderCards = (cards) => {
+const updateAvatarPopup = document.querySelector('.popup_type_avatar');
+const profileImageContainer = document.querySelector('.profile__image-container');
+const profileImage = profileImageContainer.querySelector('.profile__image');
+const updateAvatarInput = updateAvatarPopup.querySelector(`[name="avatar"]`)
+
+const renderCards = (cards, profileId) => {
   cards.forEach((card) => {
-    cardsList.appendChild(createCard(card, deleteCard, openFullModePopup, addLike));
+    cardsList.appendChild(createCard(card, deleteCard, openFullModePopup, toggleLike, profileId));
   });
 };
 
+const renderProfile = (user) => {
+  const { name, about, avatar } = user;
+  profileTitle.textContent = name;
+  profileDescription.textContent = about;
+  profileImage.src = avatar;
+}
+
 const openEditProfilePopup = () => {
   openPopup(editProfilePopup);
+  clearValidation( editProfileForm, VALIDATION_CONFIG);
 
   titleInput.value = profileTitle.textContent;
   descriptionInput.value = profileDescription.textContent;
 };
 
-const handleEditFormFormSubmit = (e) => {
+const handleEditFormFormSubmit = async (e) => {
   e.preventDefault();
 
-  profileTitle.textContent = titleInput.value;
-  profileDescription.textContent = descriptionInput.value;
+  const updatedProfile = await apiService.editProfile({
+    name: titleInput.value,
+    about: descriptionInput.value,
+  })
+
+  profileTitle.textContent = updatedProfile.name;
+  profileDescription.textContent = updatedProfile.about;
 
   closePopup(editProfilePopup);
 };
@@ -52,21 +80,26 @@ const openAddNewCardPopup = () => {
   linkInput.value = '';
 
   openPopup(addNewCardPopup);
+  clearValidation( addNewCardForm, VALIDATION_CONFIG);
 };
 
-const handleAddNewCardFormSubmit = (e) => {
+const handleAddNewCardFormSubmit = async (e) => {
   e.preventDefault();
 
   const name = placeNameInput.value;
   const link = linkInput.value;
 
-  const newCard = createCard({ name, link }, deleteCard, openFullModePopup, addLike);
-  cardsList.prepend(newCard);
+  const newCardData = await apiService.addNewCard({ name, link });
 
-  placeNameInput.value = '';
-  linkInput.value = '';
-
-  closePopup(addNewCardPopup);
+  if (newCardData) {
+    const newCard = createCard(newCardData, deleteCard, openFullModePopup, toggleLike);
+    cardsList.prepend(newCard);
+  
+    placeNameInput.value = '';
+    linkInput.value = '';
+  
+    closePopup(addNewCardPopup);
+  }
 };
 
 const openFullModePopup = ({ name, link }) => {
@@ -76,8 +109,25 @@ const openFullModePopup = ({ name, link }) => {
   openPopup(fullModePopup);
 };
 
+const openUpdateAvatarPopup = () => {
+  updateAvatarInput.value = "";
 
-renderCards(initialCards);
+  openPopup(updateAvatarPopup);
+  clearValidation(updateAvatarPopup, VALIDATION_CONFIG);
+};
+
+const handleUpdateAvatarFormSubmit = async (e) => {
+  e.preventDefault();
+
+  const avatar = updateAvatarInput.value;
+
+  const profile = await apiService.updateAvatar(avatar);
+
+  if (profile) {
+    profileImage.src = avatar;
+    closePopup(updateAvatarPopup);
+  }
+}
 
 popups.forEach((popup) => {
   popup.addEventListener('mousedown', (e) => {
@@ -98,4 +148,13 @@ editProfileButton.addEventListener('click', openEditProfilePopup);
 editProfileForm.addEventListener('submit', handleEditFormFormSubmit); 
 addNewCardButton.addEventListener('click', openAddNewCardPopup);
 addNewCardForm.addEventListener('submit', handleAddNewCardFormSubmit);
+profileImageContainer.addEventListener('click', openUpdateAvatarPopup);
+updateAvatarPopup.addEventListener('submit', handleUpdateAvatarFormSubmit);
 
+enableValidation(VALIDATION_CONFIG);
+
+
+Promise.all([apiService.getUser(), apiService.getCards()]).then(([user, cards]) => {
+  renderCards(cards, user._id);
+  renderProfile(user);
+});

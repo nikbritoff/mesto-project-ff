@@ -1,30 +1,61 @@
+import { apiService } from "./api";
+
 const cardTemplate = document.querySelector('#card-template').content; 
 
-const createCard = (cardContent, onDeleteClick, onImageClick, addLike) => {
-  const { name, link } = cardContent;
+const createCard = (cardContent, deleteCard, onImageClick, toggleLike, profileId) => {
+  const { name, link, likes, _id : cardId, owner } = cardContent;
   const card = cardTemplate.querySelector('.card').cloneNode(true);
   const image = card.querySelector('.card__image');
   const title = card.querySelector('.card__title');
   const deleteButton = card.querySelector('.card__delete-button');
-  const like = card.querySelector('.card__like-button');
+  const like = card.querySelector('.card__like');
+  const likeButton = like.querySelector('.card__like-button');
+  const likesCount = like.querySelector('.card__like-count');
+
+  const isLiked = likes.some((like) => like._id === profileId);
 
   image.src = link;
   image.alt = link;
   title.textContent = name;
+  likesCount.textContent = likes.length;
 
-  deleteButton.addEventListener('click', onDeleteClick);
+  if (isLiked) {
+    likeButton.classList.add('card__like-button_is-active');
+  }
+
+  if (owner._id === profileId) {
+    deleteButton.addEventListener('click', (event) => deleteCard(event, cardId));
+  } else {
+    deleteButton.remove();
+  }
+
   image.addEventListener('click', () => onImageClick({ name, link }));
-  like.addEventListener('click', () => addLike(like));
+  likeButton.addEventListener('click', () => toggleLike(like, cardId));
 
   return card;
 }
 
-const deleteCard = ({ target }) => {
+const deleteCard = async ({ target }, cardId) => {
+  const res = await apiService.deleteCard(cardId);
   target.closest('.card').remove();
 }
 
-const addLike = (like) => {
-  like.classList.toggle('card__like-button_is-active');
+const toggleLike = async (likeElement, cardId) => {  
+  const likeButton = likeElement.querySelector('.card__like-button');
+  const likesCount = likeElement.querySelector('.card__like-count');
+  const isLiked = likeButton.classList.contains('card__like-button_is-active');
+
+  if (isLiked) {
+    const updatedCard = await apiService.deleteLike(cardId);
+    likeButton.classList.remove('card__like-button_is-active');
+    likesCount.textContent = updatedCard.likes.length;
+
+    return;
+  }
+
+  const updatedCard = await apiService.addLike(cardId);
+  likeButton.classList.add('card__like-button_is-active');
+  likesCount.textContent = updatedCard.likes.length;
 }
 
-export { createCard, deleteCard, addLike }
+export { createCard, deleteCard, toggleLike }
