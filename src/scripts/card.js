@@ -36,8 +36,13 @@ const createCard = (cardContent, deleteCard, onImageClick, toggleLike, profileId
 }
 
 const deleteCard = async ({ target }, cardId) => {
-  const res = await apiService.deleteCard(cardId);
-  target.closest('.card').remove();
+  apiService.deleteCard(cardId)
+    .then(() => {
+      target.closest('.card').remove();
+    })
+    .catch(() => {
+      console.log(`Ошибка удаления карточки: ${error}`);
+    });
 }
 
 const toggleLike = async (likeElement, cardId) => {  
@@ -46,16 +51,26 @@ const toggleLike = async (likeElement, cardId) => {
   const isLiked = likeButton.classList.contains('card__like-button_is-active');
 
   if (isLiked) {
-    const updatedCard = await apiService.deleteLike(cardId);
-    likeButton.classList.remove('card__like-button_is-active');
-    likesCount.textContent = updatedCard.likes.length;
+    apiService.deleteLike(cardId)
+    .then((updatedCard) => {
+      likeButton.classList.remove('card__like-button_is-active');
+      likesCount.textContent = updatedCard.likes.length;
+    })
+    .catch((error) => {
+      console.log(`Ошибка удаления лайка: ${error}`);
+    });
 
     return;
   }
 
-  const updatedCard = await apiService.addLike(cardId);
-  likeButton.classList.add('card__like-button_is-active');
-  likesCount.textContent = updatedCard.likes.length;
+  apiService.addLike(cardId)
+    .then((updatedCard) => {
+      likeButton.classList.add('card__like-button_is-active');
+      likesCount.textContent = updatedCard.likes.length;
+    })
+    .catch((error) => {
+      console.log(`Ошибка добавления лайка: ${error}`);
+    });
 }
 
 export { createCard, deleteCard, toggleLike }

@@ -14,7 +14,7 @@ class Api {
       return Promise.reject(`Ошибка ${response.status} - ${error.message}`);
     }
 
-    return Promise.resolve(response);
+    return response.json()
   }
 
   async get(url) {
@@ -22,7 +22,7 @@ class Api {
       headers: {
         authorization: this.authToken,
       }
-    }).then(this.checkResponse).then((res) => res.json());
+    }).then(this.checkResponse);
 
     return response;
   }
@@ -35,7 +35,7 @@ class Api {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(data),
-    }).then(this.checkResponse).then((res) => res.json());
+    }).then(this.checkResponse);
 
     return response;
   }
@@ -48,7 +48,7 @@ class Api {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(data),
-    }).then(this.checkResponse).then((res) => res.json());
+    }).then(this.checkResponse);
 
     return response;
   }
@@ -60,7 +60,7 @@ class Api {
         authorization: this.authToken,
         'Content-Type': 'application/json'
       },
-    }).then(this.checkResponse).then((res) => res.json());
+    }).then(this.checkResponse);
 
     return response;
   }
@@ -72,7 +72,7 @@ class Api {
         authorization: this.authToken,
         'Content-Type': 'application/json'
       },
-    }).then(this.checkResponse).then((res) => res.json());
+    }).then(this.checkResponse);
 
     return response;
   }
@@ -83,67 +83,35 @@ const apiInstance = new Api({ baseUrl: BASE_URL, id: ID, authToken: AUTH_TOKEN }
 
 class ApiService {
   async getUser() {
-    try {
-      return await apiInstance.get('users/me');
-    } catch (error) {
-      console.log(`Ошибка получения данных о пользователе: ${error}`);
-    }
+    return apiInstance.get('users/me');
   }
 
   async editProfile(data) {
-    try {
-      return await apiInstance.patch('users/me', data);
-    } catch (error) {
-      console.log(`Ошибка обновления данных о пользователе: ${error}`);
-    }
+    return apiInstance.patch('users/me', data);
   }
 
-  async getCards() {
-    try {
-      return await apiInstance.get('cards');
-    } catch (error) {
-      console.log(`Ошибка получения данных о карточках: ${error}`);
-    }
+  getCards() {
+    return apiInstance.get('cards');
   }
 
   async addNewCard(data) {
-    try {
-      return await apiInstance.post('cards', data);
-    } catch (error) {
-      console.log(`Ошибка добавления новой карточки: ${error}`);
-    }
+    return apiInstance.post('cards', data);
   }
 
   async deleteCard(cardId) {
-    try {
-      return await apiInstance.delete(`cards/${cardId}`);
-    } catch (error) {
-      console.log(`Ошибка удаления карточки: ${error}`);
-    }
+    return apiInstance.delete(`cards/${cardId}`);
   }
 
   async addLike(cardId) {
-    try {
-      return await apiInstance.put(`cards/likes/${cardId}`);
-    } catch (error) {
-      console.log(`Ошибка добавления лайка: ${error}`);
-    }  
+    return apiInstance.put(`cards/likes/${cardId}`);
   }
 
   async deleteLike(cardId) {
-    try {
-      return await apiInstance.delete(`cards/likes/${cardId}`);
-    } catch (error) {
-      console.log(`Ошибка удаления лайка: ${error}`);
-    }  
+    return apiInstance.delete(`cards/likes/${cardId}`);
   }
 
   async updateAvatar(avatar) {
-    try {
-      return await apiInstance.patch('users/me/avatar', { avatar });
-    } catch (error) {
-      console.log(`Ошибка обновления аватара: ${error}`);
-    }
+    return apiInstance.patch('users/me/avatar', { avatar });
   }
 }
 

@@ -79,18 +79,22 @@ const handleEditFormFormSubmit = async (e) => {
   e.preventDefault();
 
   setButtonLoadingState(editProfileSubmitButton);
-  const updatedProfile = await apiService.editProfile({
+  
+  apiService.editProfile({
     name: titleInput.value,
     about: descriptionInput.value,
-  });
-
-  if (updatedProfile) {
-    profileTitle.textContent = updatedProfile.name;
-    profileDescription.textContent = updatedProfile.about;
-    closePopup(editProfilePopup);
-  }
-
-  removeButtonLoadingState(editProfileSubmitButton);
+  })
+    .then((updatedProfile) => {
+      profileTitle.textContent = updatedProfile.name;
+      profileDescription.textContent = updatedProfile.about;
+      closePopup(editProfilePopup);
+    })
+    .catch((error) => {
+      console.log(`Ошибка обновления данных о пользователе: ${error}`);
+    })
+    .finally(() => {
+      removeButtonLoadingState(editProfileSubmitButton);
+    });
 };
 
 const openAddNewCardPopup = () => {
@@ -108,23 +112,25 @@ const handleAddNewCardFormSubmit = async (e) => {
   const link = linkInput.value;
 
   setButtonLoadingState(addNewCardSubmitButton);
-  const newCardData = await apiService.addNewCard({ name, link });
 
-  if (newCardData) {
-    const newCard = createCard(newCardData, deleteCard, openFullModePopup, toggleLike);
-    cardsList.prepend(newCard);
-  
-    placeNameInput.value = '';
-    linkInput.value = '';
-  
-    closePopup(addNewCardPopup);
-  }
-
-  removeButtonLoadingState(addNewCardSubmitButton);
+  apiService.addNewCard({ name, link })
+    .then((newCardData) => {
+      const newCard = createCard(newCardData, deleteCard, openFullModePopup, toggleLike, newCardData.owner._id);
+      cardsList.prepend(newCard);
+    
+      closePopup(addNewCardPopup);
+    })
+    .catch((error) => {
+      console.log(`Ошибка добавления новой карточки: ${error}`);
+    })
+    .finally(() => {
+      removeButtonLoadingState(addNewCardSubmitButton);
+    });
 };
 
 const openFullModePopup = ({ name, link }) => {
   fullModeImage.src = link;
+  fullModeImage.alt = name;
   fullModeCaption.textContent = name;
 
   openPopup(fullModePopup);
@@ -143,14 +149,17 @@ const handleUpdateAvatarFormSubmit = async (e) => {
   const avatar = updateAvatarInput.value;
 
   setButtonLoadingState(updateAvatarSubmitButton);
-  const profile = await apiService.updateAvatar(avatar);
-
-  if (profile) {
-    profileImage.src = avatar;
-    closePopup(updateAvatarPopup);
-  }
-
-  removeButtonLoadingState(updateAvatarSubmitButton);
+  apiService.updateAvatar(avatar)
+    .then(() => {
+      profileImage.src = avatar;
+      closePopup(updateAvatarPopup);
+    })
+    .catch((error) => {
+      console.log(`Ошибка обновления аватара: ${error}`);
+    })
+    .finally(() => {
+      removeButtonLoadingState(updateAvatarSubmitButton);
+    });
 }
 
 popups.forEach((popup) => {
@@ -181,4 +190,4 @@ enableValidation(VALIDATION_CONFIG);
 Promise.all([apiService.getUser(), apiService.getCards()]).then(([user, cards]) => {
   renderCards(cards, user._id);
   renderProfile(user);
-});
+}).catch((reason) => console.log(reason));
