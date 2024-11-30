@@ -4,11 +4,14 @@ const AUTH_TOKEN = '0e5cb93e-01e9-44b7-9c6b-a5311a25f48d';
 
 class Api {
   constructor({ baseUrl, id, authToken }) {
-    this.url = `${baseUrl}/${id}`;
-    this.authToken = authToken;
+    this._baseUrl  = `${baseUrl}/${id}`;
+    this._headers = {
+      authorization: authToken,
+      'Content-Type': 'application/json'
+    };
   }
 
-  async checkResponse (response) {
+  async _checkResponse (response) {
     if (!response.ok) {
       const error = await response.json()
       return Promise.reject(`Ошибка ${response.status} - ${error.message}`);
@@ -17,62 +20,53 @@ class Api {
     return response.json()
   }
 
-  async get(url) {
-    const response = await fetch(`${this.url}/${url}`, {
-      headers: {
-        authorization: this.authToken,
-      }
-    }).then(this.checkResponse);
+  _request(endpoint, options) {
+    return fetch(`${this._baseUrl }/${endpoint}`, options).then(this._checkResponse);
+  }
+
+
+  async get(endpoint) {
+    const response = await this._request(endpoint, {
+      headers: this._headers,
+    });
 
     return response;
   }
 
-  async patch(url, data) {
-    const response = await fetch(`${this.url}/${url}`, {
+  async patch(endpoint, data) {
+    const response = await this._request(endpoint, {
       method: 'PATCH',
-      headers: {
-        authorization: this.authToken,
-        'Content-Type': 'application/json'
-      },
+      headers: this._headers,
       body: JSON.stringify(data),
-    }).then(this.checkResponse);
+    });
 
     return response;
   }
 
-  async post(url, data) {
-    const response = await fetch(`${this.url}/${url}`, {
+  async post(endpoint, data) {
+    const response = await this._request(endpoint, {
       method: 'POST',
-      headers: {
-        authorization: this.authToken,
-        'Content-Type': 'application/json'
-      },
+      headers: this._headers,
       body: JSON.stringify(data),
-    }).then(this.checkResponse);
+    });
 
     return response;
   }
 
-  async put(url) {
-    const response = await fetch(`${this.url}/${url}`, {
+  async put(endpoint) {
+    const response = await this._request(endpoint, {
       method: 'PUT',
-      headers: {
-        authorization: this.authToken,
-        'Content-Type': 'application/json'
-      },
-    }).then(this.checkResponse);
+      headers: this._headers,
+    });
 
     return response;
   }
 
-  async delete(url) {
-    const response = await fetch(`${this.url}/${url}`, {
+  async delete(endpoint) {
+    const response = await this._request(endpoint, {
       method: 'DELETE',
-      headers: {
-        authorization: this.authToken,
-        'Content-Type': 'application/json'
-      },
-    }).then(this.checkResponse);
+      headers: this._headers,
+    });
 
     return response;
   }
@@ -82,11 +76,11 @@ const apiInstance = new Api({ baseUrl: BASE_URL, id: ID, authToken: AUTH_TOKEN }
 
 
 class ApiService {
-  async getUser() {
+  getUser() {
     return apiInstance.get('users/me');
   }
 
-  async editProfile(data) {
+  editProfile(data) {
     return apiInstance.patch('users/me', data);
   }
 
@@ -94,23 +88,23 @@ class ApiService {
     return apiInstance.get('cards');
   }
 
-  async addNewCard(data) {
+  addNewCard(data) {
     return apiInstance.post('cards', data);
   }
 
-  async deleteCard(cardId) {
+  deleteCard(cardId) {
     return apiInstance.delete(`cards/${cardId}`);
   }
 
-  async addLike(cardId) {
+  addLike(cardId) {
     return apiInstance.put(`cards/likes/${cardId}`);
   }
 
-  async deleteLike(cardId) {
+  deleteLike(cardId) {
     return apiInstance.delete(`cards/likes/${cardId}`);
   }
 
-  async updateAvatar(avatar) {
+  updateAvatar(avatar) {
     return apiInstance.patch('users/me/avatar', { avatar });
   }
 }
