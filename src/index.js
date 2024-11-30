@@ -24,21 +24,35 @@ const profileDescription = document.querySelector('.profile__description');
 const editProfileForm = editProfilePopup.querySelector(`[name="edit-profile"]`);
 const titleInput = editProfileForm.querySelector(`[name="name"]`);
 const descriptionInput = editProfileForm.querySelector(`[name="description"]`);
+const editProfileSubmitButton = editProfileForm.querySelector('.popup__button');
 
 const addNewCardPopup = document.querySelector('.popup_type_new-card');
 const addNewCardButton = document.querySelector('.profile__add-button');
 const addNewCardForm = addNewCardPopup.querySelector('.popup__form');
 const placeNameInput = addNewCardForm.querySelector(`[name="place-name"]`);
 const linkInput = addNewCardForm.querySelector(`[name="link"]`);
+const addNewCardSubmitButton = addNewCardForm.querySelector('.popup__button');
 
 const fullModePopup = document.querySelector('.popup_type_image');
 const fullModeImage = fullModePopup.querySelector('.popup__image');
 const fullModeCaption = fullModePopup.querySelector('.popup__caption');
 
 const updateAvatarPopup = document.querySelector('.popup_type_avatar');
+const updateAvatarForm = updateAvatarPopup.querySelector('.popup__form');
+const updateAvatarInput = updateAvatarForm.querySelector(`[name="avatar"]`);
+const updateAvatarSubmitButton = updateAvatarForm.querySelector('.popup__button');
 const profileImageContainer = document.querySelector('.profile__image-container');
 const profileImage = profileImageContainer.querySelector('.profile__image');
-const updateAvatarInput = updateAvatarPopup.querySelector(`[name="avatar"]`)
+
+const setButtonLoadingState = (buttonElement) => {
+  buttonElement.textContent = 'Сохранение...';
+  buttonElement.disabled = true;
+}
+
+const removeButtonLoadingState = (buttonElement) => {
+  buttonElement.textContent = 'Сохранить';
+  buttonElement.disabled = false;
+}
 
 const renderCards = (cards, profileId) => {
   cards.forEach((card) => {
@@ -64,15 +78,19 @@ const openEditProfilePopup = () => {
 const handleEditFormFormSubmit = async (e) => {
   e.preventDefault();
 
+  setButtonLoadingState(editProfileSubmitButton);
   const updatedProfile = await apiService.editProfile({
     name: titleInput.value,
     about: descriptionInput.value,
-  })
+  });
 
-  profileTitle.textContent = updatedProfile.name;
-  profileDescription.textContent = updatedProfile.about;
+  if (updatedProfile) {
+    profileTitle.textContent = updatedProfile.name;
+    profileDescription.textContent = updatedProfile.about;
+    closePopup(editProfilePopup);
+  }
 
-  closePopup(editProfilePopup);
+  removeButtonLoadingState(editProfileSubmitButton);
 };
 
 const openAddNewCardPopup = () => {
@@ -89,6 +107,7 @@ const handleAddNewCardFormSubmit = async (e) => {
   const name = placeNameInput.value;
   const link = linkInput.value;
 
+  setButtonLoadingState(addNewCardSubmitButton);
   const newCardData = await apiService.addNewCard({ name, link });
 
   if (newCardData) {
@@ -100,6 +119,8 @@ const handleAddNewCardFormSubmit = async (e) => {
   
     closePopup(addNewCardPopup);
   }
+
+  removeButtonLoadingState(addNewCardSubmitButton);
 };
 
 const openFullModePopup = ({ name, link }) => {
@@ -121,12 +142,15 @@ const handleUpdateAvatarFormSubmit = async (e) => {
 
   const avatar = updateAvatarInput.value;
 
+  setButtonLoadingState(updateAvatarSubmitButton);
   const profile = await apiService.updateAvatar(avatar);
 
   if (profile) {
     profileImage.src = avatar;
     closePopup(updateAvatarPopup);
   }
+
+  removeButtonLoadingState(updateAvatarSubmitButton);
 }
 
 popups.forEach((popup) => {
@@ -149,7 +173,7 @@ editProfileForm.addEventListener('submit', handleEditFormFormSubmit);
 addNewCardButton.addEventListener('click', openAddNewCardPopup);
 addNewCardForm.addEventListener('submit', handleAddNewCardFormSubmit);
 profileImageContainer.addEventListener('click', openUpdateAvatarPopup);
-updateAvatarPopup.addEventListener('submit', handleUpdateAvatarFormSubmit);
+updateAvatarForm.addEventListener('submit', handleUpdateAvatarFormSubmit);
 
 enableValidation(VALIDATION_CONFIG);
 
