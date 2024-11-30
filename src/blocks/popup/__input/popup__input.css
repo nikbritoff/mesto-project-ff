@@ -7,11 +7,28 @@
   line-height: 18px;
   box-sizing: border-box;
   padding: 10px 0 0;
-  margin-bottom: 10px;
+  position: relative;
 }
 
 .popup__input:last-of-type {
   margin-bottom: 0;
+}
+
+.popup__input--error {
+  border-bottom-color: #ff0000;
+}
+
+.popup__input_error {
+  display: block;
+  color:#ff0000;
+  font-size: 12px;
+  margin-block-start: 5px;
+  min-height: 28px;
+  visibility: hidden;
+}
+
+.popup__input_error--active {
+  visibility: visible;
 }
 
 @media screen and (max-width: 568px) {
